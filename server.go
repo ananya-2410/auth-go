@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -20,30 +19,9 @@ var authenticator auth.Authenticator
 var cache store.Cache
 
 func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
-	// hasuraVariables := map[string]string{
-	// 	"X-Hasura-Role":    "user", // result.role
-	// 	"X-Hasura-User-Id": "1",
-	// }
-
-	// body := fmt.Sprintf("Hasura Variables: %s \n", hasuraVariables)
-	r.Header.Set("X-Hasura-Role", "user")
-	r.Header.Set("X-Hasura-User-Id", "1")
-	client := &http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	resp, err := client.Do(r)
-
-	if err != nil {
-
-		log.Fatalln(err)
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf(string(body))
-		log.Fatalln(err)
-	}
+	w.Header().Set("X-Hasura-Role", "user")
+	w.Header().Set("X-Hasura-User-Id", "1")
+	body := w.Header().Get("X-Hasura-Role")
 	output_body := string(body)
 	log.Printf(output_body)
 	w.Write([]byte(body))
