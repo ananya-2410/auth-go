@@ -24,7 +24,7 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       ## uncomment next line to set an admin secret
       HASURA_GRAPHQL_ADMIN_SECRET: SUL-AGNA-17-04
-      HASURA_GRAPHQL_AUTH_HOOK: http://127.0.0.1:8081/v1/graphql
+      HASURA_GRAPHQL_AUTH_HOOK: http://127.0.0.1:8080/v1/graphql
 volumes:
   db_data:
 
