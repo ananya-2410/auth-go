@@ -46,7 +46,11 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 		"X-Hasura-User-Id": role_map[username],
 	}
 	json_object, err := json.Marshal(dict)
-
+	if err != nil {
+		log.Fatalln(err)
+	}
+	body := fmt.Sprintf("\n %s\n ", string(json_object))
+	w.Write([]byte(body))
 	log.Println(string(json_object))
 }
 func main() {
