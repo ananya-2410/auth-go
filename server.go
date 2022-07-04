@@ -27,40 +27,42 @@ var role_map = map[string]string{
 }
 
 type input_struct struct {
-	username string
-	password string
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 type token_struct struct {
-	token string
+	Token string `json:"token"`
 }
 
 func createToken(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
+	defer r.Body.Close()
 	if err != nil {
 		panic(err)
 	}
 	log.Println(string(body))
-	var input input_struct
-	err = json.Unmarshal(body, &input)
+	var info input_struct
+	err = json.Unmarshal(body, &info)
 	if err != nil {
 		panic(err)
 	}
 	token := uuid.New().String()
-	username := input.username
-	pwd := input.password
+	username := info.Username
+	pwd := info.Password
 	if creds_map[username] != pwd {
 		fmt.Println("Error credentials")
 		log.Fatalln("ERROR CREDENTIALS")
 	}
-	token_map[token] = username
+	token_map[token] = string(username)
 	log.Println(token)
 
 	output_map := map[string]string{
 		"token": token,
 	}
 	token_dict, _ := json.Marshal(output_map)
-	output_body := fmt.Sprintf("%s", string(token_dict))
+
+	output_body := fmt.Sprintf("\n%s\n", string(token_dict))
 	w.Write([]byte(output_body))
 }
 
@@ -75,7 +77,7 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	token_val := token_temp.token
+	token_val := token_temp.Token
 	username, ok := token_map[token_val]
 	if !ok {
 		username = "anonymous"
@@ -89,7 +91,7 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 		log.Fatalln(err)
 	}
 	// token_map_dict, _ := json.Marshal(token_map)
-	output_body := fmt.Sprintf("\n %s", string(json_object))
+	output_body := fmt.Sprintf("\n%s\n", string(json_object))
 	w.Write([]byte(output_body))
 	log.Println(string(json_object))
 }
