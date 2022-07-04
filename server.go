@@ -51,7 +51,7 @@ func createToken(w http.ResponseWriter, r *http.Request) {
 	username := info.Username
 	pwd := info.Password
 	if creds_map[username] != pwd {
-		fmt.Println("Error credentials")
+		w.Write([]byte("Error credentials"))
 		log.Fatalln("ERROR CREDENTIALS")
 	}
 	token_map[token] = string(username)
