@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -25,19 +26,57 @@ var role_map = map[string]string{
 	"anonymous": "0",
 }
 
-type Foo struct {
-	Name string `json:"X-Hasura-Role"`
-	Id   string `json:"X-Hasura-User-Id"`
+type input_struct struct {
+	username string
+	password string
+}
+
+type token_struct struct {
+	token string
+}
+
+func createToken(w http.ResponseWriter, r *http.Request) {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		panic(err)
+	}
+	log.Println(string(body))
+	var input input_struct
+	err = json.Unmarshal(body, &input)
+	if err != nil {
+		panic(err)
+	}
+	token := uuid.New().String()
+	username := input.username
+	pwd := input.password
+	if creds_map[username] != pwd {
+		fmt.Println("Error credentials")
+		log.Fatalln("ERROR CREDENTIALS")
+	}
+	token_map[token] = username
+	log.Println(token)
+
+	output_map := map[string]string{
+		"token": token,
+	}
+	token_dict, _ := json.Marshal(output_map)
+	output_body := fmt.Sprintf("%s", string(token_dict))
+	w.Write([]byte(output_body))
 }
 
 func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
+	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Please pass the data as URL form encoded", http.StatusBadRequest)
-		return
+		panic(err)
 	}
-	token := r.Form.Get("token")
-	username, ok := token_map[token]
+	log.Println(string(body))
+	var token_temp token_struct
+	err = json.Unmarshal(body, &token_temp)
+	if err != nil {
+		panic(err)
+	}
+	token_val := token_temp.token
+	username, ok := token_map[token_val]
 	if !ok {
 		username = "anonymous"
 	}
@@ -49,10 +88,12 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	body := fmt.Sprintf("\n %s\n ", string(json_object))
-	w.Write([]byte(body))
+	// token_map_dict, _ := json.Marshal(token_map)
+	output_body := fmt.Sprintf("\n %s", string(json_object))
+	w.Write([]byte(output_body))
 	log.Println(string(json_object))
 }
+
 func main() {
 	router := mux.NewRouter()
 
@@ -60,23 +101,4 @@ func main() {
 	router.HandleFunc("/v1/verify", getHasuraVariables).Methods("POST")
 	log.Println("Server started and listening on http://127.0.0.1:8000")
 	http.ListenAndServe("127.0.0.1:8081", router)
-}
-
-func createToken(w http.ResponseWriter, r *http.Request) {
-
-	token := uuid.New().String()
-	err := r.ParseForm()
-	if err != nil {
-		http.Error(w, "Please pass the data as URL form encoded", http.StatusBadRequest)
-		return
-	}
-	username := r.Form.Get("username")
-	pwd := r.Form.Get("password")
-	if creds_map[username] != pwd {
-		fmt.Println("Error credentials")
-		log.Fatalln("ERROR CREDENTIALS")
-	}
-	body := fmt.Sprintf("token: %s \n", token)
-	token_map[token] = username
-	w.Write([]byte(body))
 }
