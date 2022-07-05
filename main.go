@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -51,7 +52,6 @@ func createToken(w http.ResponseWriter, r *http.Request) {
 	username := info.Username
 	pwd := info.Password
 	if creds_map[username] != pwd {
-		w.Write([]byte("Error credentials"))
 		log.Fatalln("ERROR CREDENTIALS")
 	}
 	token_map[token] = string(username)
@@ -97,10 +97,16 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	router := mux.NewRouter()
 
+	router := mux.NewRouter()
+	srv := &http.Server{
+		Handler:      router,
+		Addr:         ":" + "8000",
+		WriteTimeout: 15 * time.Second,
+		ReadTimeout:  15 * time.Second,
+	}
 	router.HandleFunc("/v1/login", createToken).Methods("POST")
 	router.HandleFunc("/v1/verify", getHasuraVariables).Methods("POST")
 	log.Println("Server started and listening on http://127.0.0.1:8000")
-	http.ListenAndServe("127.0.0.1:8081", router)
+	log.Fatal(srv.ListenAndServe())
 }
