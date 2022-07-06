@@ -24,7 +24,19 @@ services:
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       ## uncomment next line to set an admin secret
       HASURA_GRAPHQL_ADMIN_SECRET: SUL-AGNA-17-04
-      HASURA_GRAPHQL_AUTH_HOOK: http://127.0.0.1:8080/v1/graphql
+      HASURA_GRAPHQL_AUTH_HOOK: http://auth:8000/v1/verify
+      HASURA_GRAPHQL_AUTH_HOOK_MODE: POST
+  auth:
+      image: auth-1
+      build:
+        context: .
+        dockerfile: ./Dockerfile
+      ports:
+      - "8000:8000"
+      depends_on:
+      - postgres
+      - graphql-engine
+      restart: unless-stopped
 volumes:
   db_data:
 

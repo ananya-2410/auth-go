@@ -22,9 +22,9 @@ var creds_map = map[string]string{
 }
 
 var role_map = map[string]string{
-	"user1":     "1",
-	"user2":     "2",
-	"anonymous": "0",
+	"user1": "1",
+	"user2": "2",
+	"user0": "0",
 }
 
 type input_struct struct {
@@ -33,6 +33,10 @@ type input_struct struct {
 }
 
 type token_struct struct {
+	Headers Hd `json:"headers"`
+}
+
+type Hd struct {
 	Token string `json:"token"`
 }
 
@@ -72,15 +76,19 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	log.Println(string(body))
-	var token_temp token_struct
-	err = json.Unmarshal(body, &token_temp)
+	token_temp := &token_struct{}
+
+	err = json.Unmarshal([]byte(body), token_temp)
+
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
-	token_val := token_temp.Token
+
+	token_val := token_temp.Headers.Token
+	log.Println(string(token_val))
 	username, ok := token_map[token_val]
 	if !ok {
-		username = "anonymous"
+		username = "user0"
 	}
 	dict := map[string]string{
 		"X-Hasura-Role":    username,
@@ -90,10 +98,12 @@ func getHasuraVariables(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	// token_map_dict, _ := json.Marshal(token_map)
-	output_body := fmt.Sprintf("\n%s\n", string(json_object))
-	w.Write([]byte(output_body))
+
+	token_map_dict, _ := json.Marshal(token_map)
+	fmt.Fprintf(w, string(json_object))
+
 	log.Println(string(json_object))
+	log.Println(string(token_map_dict))
 }
 
 func main() {
